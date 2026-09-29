@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controlo de Acessos | CEUMA Universidade</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+
+    <!-- Bibliotecas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- Cabeçalho -->
+        <header class="bg-white rounded-xl shadow-sm p-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <img src="assets/logo.png" alt="Logo CEUMA Universidade" class="brand-logo">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-blue-600"></i>
+                        Controlo de Acessos
+                    </h1>
+                    <p class="text-gray-500 text-sm mt-1">Registo de Entradas, Saídas e Captura Fotográfica (Sincronização OneDrive)</p>
+                </div>
+            </div>
+            <div id="clock" class="text-xl font-mono bg-gray-100 px-4 py-2 rounded-lg font-semibold text-gray-700">
+                00:00:00
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Painel da Câmara -->
+            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center">
+                <h2 class="text-lg font-semibold w-full border-b pb-2 mb-4 flex items-center gap-2">
+                    <i data-lucide="camera" class="w-5 h-5 text-gray-500"></i> Captura de Fotografia
+                </h2>
+
+                <div class="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center mb-4">
+                    <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline></video>
+                    <img id="photo-preview" class="absolute inset-0 w-full h-full object-cover hidden" alt="Pré-visualização">
+                    <div id="camera-loading" class="absolute text-white flex flex-col items-center">
+                        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2"></i>
+                        A iniciar câmara...
+                    </div>
+                </div>
+
+                <div class="flex gap-4 w-full">
+                    <button id="btn-capture" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                        <i data-lucide="aperture" class="w-5 h-5"></i> Capturar Foto
+                    </button>
+                    <button id="btn-retake" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-lg items-center justify-center gap-2 transition-colors hidden">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i> Repetir
+                    </button>
+                </div>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+
+            <!-- Formulário de Registo -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
+                    <i data-lucide="user" class="w-5 h-5 text-gray-500"></i> Dados do Visitante/Colaborador
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="cpf" class="block text-sm font-medium text-gray-700 mb-1">CPF / NIF</label>
+                        <input type="text" id="cpf" placeholder="Ex: 123.456.789-00" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    </div>
+
+                    <div>
+                        <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <input type="text" id="nome" placeholder="Introduza o nome completo" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    </div>
+
+                    <div class="pt-4 flex gap-4">
+                        <button id="btn-entrada" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                            <i data-lucide="log-in" class="w-5 h-5"></i> Registar Entrada
+                        </button>
+                        <button id="btn-saida" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                            <i data-lucide="log-out" class="w-5 h-5"></i> Registar Saída
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mt-4">
+                        * A saída apenas exige o preenchimento do CPF para localizar o registo.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Registos -->
+        <div class="bg-white rounded-xl shadow-sm p-6 overflow-hidden">
+            <h2 class="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
+                <i data-lucide="list-video" class="w-5 h-5 text-gray-500"></i> Histórico de Acessos
+            </h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-sm border-b">
+                            <th class="p-3 font-medium">Foto</th>
+                            <th class="p-3 font-medium">CPF</th>
+                            <th class="p-3 font-medium">Nome</th>
+                            <th class="p-3 font-medium">Entrada</th>
+                            <th class="p-3 font-medium">Saída</th>
+                            <th class="p-3 font-medium">Estado OneDrive</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-registos" class="text-sm divide-y">
+                        <!-- Os registos aparecerão aqui -->
+                        <tr>
+                            <td colspan="6" class="p-6 text-center text-gray-400">Nenhum registo efetuado hoje.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contentor de Notificações (Toasts) -->
+    <div id="toast-container"></div>
+
+    <!-- Lógica da aplicação -->
+    <script src="js/app.js"></script>
+</body>
+</html>
